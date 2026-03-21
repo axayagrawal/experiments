@@ -67,51 +67,6 @@ body {
   align-items: flex-end;
 }
 
-/* Bookmark Ribbon — satin style */
-.bookmark-ribbon {
-  position: absolute;
-  top: -14px;
-  width: 5px;
-  height: 28px;
-  z-index: 5;
-  opacity: 0.85;
-  border-radius: 0 0 1px 1px;
-  transition: height 0.4s cubic-bezier(0.23, 1, 0.32, 1),
-              top 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  background: linear-gradient(
-    180deg,
-    var(--ribbon-color) 0%,
-    var(--ribbon-color) 85%,
-    transparent 85%
-  );
-}
-
-.bookmark-ribbon::before,
-.bookmark-ribbon::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  width: 0;
-  height: 0;
-}
-
-.bookmark-ribbon::before {
-  left: 0;
-  border-left: 2.5px solid var(--ribbon-color);
-  border-bottom: 4px solid transparent;
-}
-
-.bookmark-ribbon::after {
-  right: 0;
-  border-right: 2.5px solid var(--ribbon-color);
-  border-bottom: 4px solid transparent;
-}
-
-.book-wrapper:hover .bookmark-ribbon {
-  height: 36px;
-  top: -22px;
-}
-
 /* Sticky Note */
 .sticky-note {
   position: absolute;
@@ -132,6 +87,36 @@ body {
 
 .book-wrapper:hover .sticky-note {
   opacity: 1;
+}
+
+/* Static noise texture on every spine */
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-size: 200px 200px;
+  background-repeat: repeat;
+  opacity: 0.25;
+  mix-blend-mode: overlay;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+}
+
+.book-wrapper:hover .noise-overlay {
+  opacity: 0.9;
+  mix-blend-mode: screen;
+}
+
+/* Single wandering sparkle canvas — covers the books row */
+.wandering-sparkle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 15;
+  pointer-events: none;
 }
 
 /* Book Spine */
@@ -170,6 +155,7 @@ body {
   left: 0;
   width: 100%;
   height: 6px;
+  z-index: 2;
 }
 
 .spine-top-label {
@@ -178,6 +164,8 @@ body {
   writing-mode: horizontal-tb;
   flex-shrink: 0;
   margin-top: 4px;
+  position: relative;
+  z-index: 2;
 }
 
 .spine-title {
@@ -191,6 +179,8 @@ body {
   align-items: center;
   padding: 4px 0;
   text-transform: uppercase;
+  position: relative;
+  z-index: 2;
 }
 
 .spine-dot {
@@ -199,6 +189,8 @@ body {
   border-radius: 50%;
   flex-shrink: 0;
   margin: 4px 0;
+  position: relative;
+  z-index: 2;
 }
 
 .spine-author {
@@ -209,6 +201,8 @@ body {
   opacity: 0.7;
   flex-shrink: 0;
   text-align: center;
+  position: relative;
+  z-index: 2;
 }
 
 @media (max-width: 768px) {
