@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Caveat:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Caveat:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap');
 
 * {
   margin: 0;
@@ -7,11 +7,22 @@
 }
 
 body {
-  background: #0a0a0a;
+  background: #386AF5;
   color: #e0e0e0;
   font-family: 'Space Grotesk', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* Night sky background */
+.night-sky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .page {
@@ -21,6 +32,38 @@ body {
   align-items: center;
   padding: 40px 40px 80px;
   justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Heading */
+.shelf-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.heading-super {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 8px;
+}
+
+.heading-main {
+  font-family: 'Playfair Display', serif;
+  font-size: 72px;
+  font-weight: 400;
+  line-height: 0.95;
+  color: #fff;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
 
 /* Shelf */
@@ -47,7 +90,7 @@ body {
 
 .shelf-ledge {
   height: 8px;
-  background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
+  background: linear-gradient(to bottom, #2a3a6a, #1a2a4a);
   border-radius: 0 0 2px 2px;
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.5),
@@ -59,7 +102,7 @@ body {
   background: radial-gradient(ellipse at 50% 0%, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
 }
 
-/* Book Wrapper — holds spine + decorations */
+/* Book Wrapper — holds spine + stickers */
 .book-wrapper {
   position: relative;
   flex-shrink: 0;
@@ -67,26 +110,30 @@ body {
   align-items: flex-end;
 }
 
-/* Sticky Note */
-.sticky-note {
+/* ── Stickers peeking from behind spines ── */
+/* Stickers — inside spine, half-clipped at edge */
+.spine-sticker {
   position: absolute;
-  z-index: 20;
-  padding: 4px 6px;
-  font-family: 'Caveat', cursive;
-  font-size: 10px;
-  font-weight: 600;
-  color: #1a1a1a;
-  width: 52px;
-  text-align: center;
-  line-height: 1.2;
-  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 5;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.book-wrapper:hover .sticky-note {
-  opacity: 1;
+.sticker-right {
+  right: -12px;
+}
+
+.sticker-left {
+  left: -12px;
+}
+
+.sticker-emoji {
+  font-size: 20px;
+  line-height: 1;
+  display: block;
+  background: white;
+  padding: 5px;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Static noise texture on every spine */
@@ -103,9 +150,13 @@ body {
   border-radius: inherit;
 }
 
-.book-wrapper:hover .noise-overlay {
-  opacity: 0.9;
-  mix-blend-mode: screen;
+/* Per-spine hover sparkles — overflows outside spine */
+.hover-sparkle-canvas {
+  position: absolute;
+  bottom: 0;
+  left: -15px;
+  z-index: 20;
+  pointer-events: none;
 }
 
 /* Single wandering sparkle canvas — covers the books row */
@@ -125,8 +176,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 4px;
+  justify-content: flex-start;
+  padding: 8px 4px 12px;
   border-radius: 2px 3px 1px 1px;
   cursor: default;
   position: relative;
@@ -149,25 +200,18 @@ body {
     0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.spine-stripe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 6px;
-  z-index: 2;
-}
-
-.spine-top-label {
-  font-size: 7px;
-  letter-spacing: 0.05em;
+/* Stars — always at top */
+.spine-stars {
+  font-size: 6px;
+  letter-spacing: 0.02em;
   writing-mode: horizontal-tb;
   flex-shrink: 0;
-  margin-top: 4px;
   position: relative;
   z-index: 2;
+  margin-bottom: 4px;
 }
 
+/* Title — centered in remaining space */
 .spine-title {
   font-size: 10px;
   font-weight: 700;
@@ -177,22 +221,14 @@ body {
   flex: 1;
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 4px 0;
   text-transform: uppercase;
   position: relative;
   z-index: 2;
 }
 
-.spine-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin: 4px 0;
-  position: relative;
-  z-index: 2;
-}
-
+/* Author — always at bottom */
 .spine-author {
   font-size: 8px;
   font-weight: 400;
@@ -203,6 +239,7 @@ body {
   text-align: center;
   position: relative;
   z-index: 2;
+  margin-top: 4px;
 }
 
 @media (max-width: 768px) {

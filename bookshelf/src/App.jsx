@@ -29,26 +29,24 @@ const PALETTE = [
   { bg: "#e5989b", text: "#1a1a1a", accent: "#6d6875" },
 ];
 
-const STICKY_NOTES = [
-  "loved this!",
-  "re-read?",
-  "gift idea",
-  "wow",
-  "so good",
-  "mind blown",
-  "cried",
-  "couldn't stop",
-  "beautiful",
-  "need sequel",
-];
-
-const STICKY_COLORS = [
-  "#fff740",
-  "#ff7eb3",
-  "#7afcff",
-  "#98fb98",
-  "#ffb347",
-  "#ff6b6b",
+/* ── Stickers: emoji + short label, peeking from behind spines ── */
+const STICKERS = [
+  { emoji: "🔥", label: "hot" },
+  { emoji: "💀", label: "dead" },
+  { emoji: "😭", label: "cried" },
+  { emoji: "🤯", label: "" },
+  { emoji: "❤️", label: "fav" },
+  { emoji: "🌙", label: "" },
+  { emoji: "✨", label: "magic" },
+  { emoji: "🫠", label: "" },
+  { emoji: "💯", label: "" },
+  { emoji: "🧠", label: "big brain" },
+  { emoji: "☕", label: "cozy" },
+  { emoji: "🎭", label: "" },
+  { emoji: "👻", label: "spooky" },
+  { emoji: "🪐", label: "" },
+  { emoji: "📖", label: "re-read" },
+  { emoji: "🎪", label: "wild" },
 ];
 
 function seededRandom(seed) {
@@ -257,11 +255,133 @@ function NoiseOverlay() {
   return <div ref={ref} className="noise-overlay" />;
 }
 
+/* ── 2-3 sparkle stars that appear on hover ── */
+function HoverSparkles({ isHovered, width, height, bgColor }) {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const sparklesRef = useRef(null);
+
+  const pad = 15; // extra padding so sparkles can overflow edges
+  const canvasW = width + pad * 2;
+  const canvasH = height + pad * 2;
+
+  // Pick new random positions each time hover starts
+  useEffect(() => {
+    if (!isHovered) {
+      sparklesRef.current = null;
+      return;
+    }
+    const count = 2 + Math.floor(Math.random() * 2); // 2 or 3
+    const sparkles = [];
+    for (let i = 0; i < count; i++) {
+      // Position near edges so they straddle the spine boundary
+      const edgeChance = Math.random();
+      let x, y;
+      if (edgeChance < 0.4) {
+        // Near left/right edge
+        x = Math.random() > 0.5 ? pad + Math.random() * 6 : pad + width - Math.random() * 6;
+        y = pad + 20 + Math.random() * (height - 40);
+      } else if (edgeChance < 0.7) {
+        // Near top/bottom edge
+        x = pad + Math.random() * width;
+        y = Math.random() > 0.5 ? pad + Math.random() * 10 : pad + height - Math.random() * 10;
+      } else {
+        // Anywhere on spine
+        x = pad + Math.random() * width;
+        y = pad + 20 + Math.random() * (height - 40);
+      }
+      sparkles.push({
+        x,
+        y,
+        maxSize: 4 + Math.random() * 6,
+        delay: i * 0.15,
+        speed: 1.5 + Math.random() * 1.5,
+      });
+    }
+    sparklesRef.current = sparkles;
+  }, [isHovered, width, height]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvasW * dpr;
+    canvas.height = canvasH * dpr;
+    ctx.scale(dpr, dpr);
+
+    let startTime = performance.now();
+
+    function draw(t) {
+      ctx.clearRect(0, 0, canvasW, canvasH);
+      const sparkles = sparklesRef.current;
+
+      if (sparkles && isHovered) {
+        const elapsed = (t - startTime) / 1000;
+
+        for (const s of sparkles) {
+          const adjustedTime = Math.max(0, elapsed - s.delay);
+          if (adjustedTime <= 0) continue;
+
+          // Single pulse: grow in, hold briefly, fade out, done
+          const duration = 0.8 / s.speed;
+          if (adjustedTime > duration) continue;
+          const t01 = adjustedTime / duration;
+          let scale;
+          if (t01 < 0.25) {
+            scale = t01 / 0.25;
+          } else if (t01 < 0.5) {
+            scale = 0.9 + Math.sin(t01 * 20) * 0.1;
+          } else {
+            scale = 1 - (t01 - 0.5) / 0.5;
+          }
+
+          const sz = s.maxSize * scale;
+          const alpha = scale * 0.95;
+
+          if (sz < 0.3) continue;
+
+          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.shadowColor = `rgba(255,255,255,${alpha * 0.8})`;
+          ctx.shadowBlur = sz * 4;
+
+          // 4-point star
+          ctx.beginPath();
+          ctx.moveTo(s.x - sz * 2, s.y);
+          ctx.lineTo(s.x - sz * 0.25, s.y - sz * 0.25);
+          ctx.lineTo(s.x, s.y - sz * 2);
+          ctx.lineTo(s.x + sz * 0.25, s.y - sz * 0.25);
+          ctx.lineTo(s.x + sz * 2, s.y);
+          ctx.lineTo(s.x + sz * 0.25, s.y + sz * 0.25);
+          ctx.lineTo(s.x, s.y + sz * 2);
+          ctx.lineTo(s.x - sz * 0.25, s.y + sz * 0.25);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      animRef.current = requestAnimationFrame(draw);
+    }
+
+    animRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [isHovered, width, height, canvasW, canvasH, bgColor]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="hover-sparkle-canvas"
+      style={{ width: canvasW, height: canvasH }}
+    />
+  );
+}
+
 function BookSpine({ book, index, spineRef }) {
   const [isHovered, setIsHovered] = useState(false);
   const color = PALETTE[index % PALETTE.length];
   const seed = book.title.length * 7 + index * 13;
-  const styleVariant = index % 5;
 
   const minH = 300;
   const maxH = 440;
@@ -273,19 +393,15 @@ function BookSpine({ book, index, spineRef }) {
   const pageNorm = Math.min(Math.max((book.pages - minPages) / (maxPages - minPages), 0), 1);
   const width = 20 + pageNorm * 45;
 
-  const direction = seededRandom(seed + 3) > 0.5 ? "vertical-rl" : "sideways-lr";
+  // Consistent vertical text direction
+  const direction = "vertical-rl";
 
-  const hasStripe = styleVariant === 0 || styleVariant === 4;
-  const hasDot = styleVariant === 2;
-  const hasTopLabel = styleVariant === 1 || styleVariant === 3;
-
-  const stickyChance = book.rating >= 5 ? 0.8 : book.rating >= 4 ? 0.3 : 0.1;
-  const hasSticky = seededRandom(seed + 7) < stickyChance;
-  const stickyText = STICKY_NOTES[Math.floor(seededRandom(seed + 8) * STICKY_NOTES.length)];
-  const stickyColor = STICKY_COLORS[Math.floor(seededRandom(seed + 9) * STICKY_COLORS.length)];
-  const stickyRotation = -12 + seededRandom(seed + 10) * 24;
-  const stickySide = seededRandom(seed + 11) > 0.5 ? "right" : "left";
-  const stickyTop = 15 + seededRandom(seed + 12) * 30;
+  // Sticker — ~35% of books get one, peeking from behind
+  const hasSticker = seededRandom(seed + 20) < 0.35;
+  const sticker = STICKERS[Math.floor(seededRandom(seed + 21) * STICKERS.length)];
+  const stickerSide = seededRandom(seed + 22) > 0.5 ? "right" : "left";
+  const stickerTop = 10 + seededRandom(seed + 23) * 60; // % from top
+  const stickerRotation = -15 + seededRandom(seed + 24) * 30;
 
   const handleEnter = useCallback(() => {
     setIsHovered(true);
@@ -298,19 +414,7 @@ function BookSpine({ book, index, spineRef }) {
 
   return (
     <div className="book-wrapper" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-      {hasSticky && (
-        <div
-          className={`sticky-note sticky-${stickySide}`}
-          style={{
-            backgroundColor: stickyColor,
-            transform: `rotate(${stickyRotation}deg)`,
-            top: `${stickyTop}%`,
-            [stickySide]: "-18px",
-          }}
-        >
-          {stickyText}
-        </div>
-      )}
+      <HoverSparkles isHovered={isHovered} width={width} height={height} bgColor={color.bg} />
 
       <div
         ref={spineRef}
@@ -325,27 +429,30 @@ function BookSpine({ book, index, spineRef }) {
       >
         <NoiseOverlay />
 
-        {hasStripe && (
+        {/* Sticker half-peeking from edge of spine */}
+        {hasSticker && (
           <div
-            className="spine-stripe"
-            style={{ backgroundColor: color.accent }}
-          />
-        )}
-
-        {hasTopLabel && (
-          <div className="spine-top-label" style={{ color: color.accent }}>
-            {"★".repeat(book.rating)}
+            className={`spine-sticker sticker-${stickerSide}`}
+            style={{
+              top: `${stickerTop}%`,
+              transform: `rotate(${stickerRotation}deg)`,
+            }}
+          >
+            <span className="sticker-emoji">{sticker.emoji}</span>
           </div>
         )}
 
+        {/* Stars always at top */}
+        <div className="spine-stars" style={{ color: color.accent }}>
+          {"★".repeat(book.rating)}
+        </div>
+
+        {/* Title centered */}
         <div className="spine-title" style={{ writingMode: direction }}>
           {book.title}
         </div>
 
-        {hasDot && (
-          <div className="spine-dot" style={{ backgroundColor: color.accent }} />
-        )}
-
+        {/* Author always at bottom */}
         <div className="spine-author" style={{ writingMode: direction }}>
           {book.author.split(" ").pop()}
         </div>
@@ -354,11 +461,231 @@ function BookSpine({ book, index, spineRef }) {
   );
 }
 
+/* ── Pixel art cloud shapes (grid templates) ── */
+const CLOUD_SHAPES = [
+  // Large fluffy cloud
+  {
+    grid: [
+      "    1111    ",
+      "  11111111  ",
+      " 1111111111 ",
+      "111111111111",
+      "111111111111",
+      " 1111111111 ",
+    ],
+    shadow: [
+      "            ",
+      "            ",
+      "            ",
+      "            ",
+      "  22222222  ",
+      " 2222222222 ",
+    ],
+  },
+  // Wide flat cloud
+  {
+    grid: [
+      "   111111   ",
+      " 111111111  ",
+      "1111111111111",
+      "1111111111111",
+      " 11111111111 ",
+    ],
+    shadow: [
+      "             ",
+      "             ",
+      "             ",
+      " 2222222222  ",
+      " 22222222222 ",
+    ],
+  },
+  // Small puff
+  {
+    grid: [
+      "  1111  ",
+      " 111111 ",
+      "11111111",
+      "11111111",
+      " 111111 ",
+    ],
+    shadow: [
+      "        ",
+      "        ",
+      "        ",
+      " 222222 ",
+      " 222222 ",
+    ],
+  },
+  // Tall cumulus
+  {
+    grid: [
+      "   11   ",
+      "  1111  ",
+      " 111111 ",
+      "11111111",
+      "11111111",
+      "11111111",
+      " 111111 ",
+    ],
+    shadow: [
+      "        ",
+      "        ",
+      "        ",
+      "        ",
+      "  2222  ",
+      "22222222",
+      " 222222 ",
+    ],
+  },
+  // Wispy small
+  {
+    grid: [
+      " 111  ",
+      "111111",
+      "111111",
+      " 1111 ",
+    ],
+    shadow: [
+      "      ",
+      "      ",
+      " 2222 ",
+      " 2222 ",
+    ],
+  },
+];
+
+/* ── Pixel Sky with 8-bit clouds ── */
+function PixelSky() {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let animId;
+
+    const pixelSize = 8; // size of each "pixel" block
+
+    // Create cloud instances
+    const clouds = [];
+    for (let i = 0; i < 6; i++) {
+      const shape = CLOUD_SHAPES[i % CLOUD_SHAPES.length];
+      // Mix of sizes: some big, some small
+      const sizeRoll = Math.random();
+      const scale = sizeRoll < 0.3 ? 1.8 + Math.random() * 1.2 : 0.8 + Math.random() * 0.6;
+      clouds.push({
+        x: Math.random() * 1.5,
+        y: 0.05 + Math.random() * 0.65,
+        speed: 0.012 + Math.random() * 0.02,
+        scale,
+        shape,
+      });
+    }
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    function drawCloud(cloud, w) {
+      const { shape, scale } = cloud;
+      const px = Math.round(pixelSize * scale);
+      const cx = cloud.x * w;
+      const cy = cloud.y * window.innerHeight;
+
+      // Draw shadow layer first (light blue)
+      ctx.fillStyle = "#7CB8F7";
+      for (let row = 0; row < shape.shadow.length; row++) {
+        for (let col = 0; col < shape.shadow[row].length; col++) {
+          if (shape.shadow[row][col] === "2") {
+            ctx.fillRect(
+              Math.round(cx + col * px),
+              Math.round(cy + row * px + px * 0.5),
+              px,
+              px
+            );
+          }
+        }
+      }
+
+      // Draw main cloud (white)
+      ctx.fillStyle = "#FFFFFF";
+      for (let row = 0; row < shape.grid.length; row++) {
+        for (let col = 0; col < shape.grid[row].length; col++) {
+          if (shape.grid[row][col] === "1") {
+            ctx.fillRect(
+              Math.round(cx + col * px),
+              Math.round(cy + row * px),
+              px,
+              px
+            );
+          }
+        }
+      }
+
+      // Light highlight on top pixels
+      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+      const topRow = shape.grid[0];
+      if (topRow) {
+        for (let col = 0; col < topRow.length; col++) {
+          if (topRow[col] === "1") {
+            ctx.fillRect(
+              Math.round(cx + col * px),
+              Math.round(cy),
+              px,
+              Math.round(px * 0.4)
+            );
+          }
+        }
+      }
+    }
+
+    function draw() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      for (const cloud of clouds) {
+        cloud.x -= cloud.speed / 100; // move right to left
+        // Wrap: when fully off left, reappear from right
+        const cloudWidth = (cloud.shape.grid[0]?.length || 10) * pixelSize * cloud.scale;
+        if (cloud.x * w + cloudWidth < -100) {
+          cloud.x = 1.1 + Math.random() * 0.3;
+          cloud.y = 0.05 + Math.random() * 0.65;
+        }
+        drawCloud(cloud, w);
+      }
+
+      animId = requestAnimationFrame(draw);
+    }
+
+    animId = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="night-sky" />;
+}
+
 function App() {
   const spineRefs = useRef([]);
 
   return (
     <div className="page">
+      <PixelSky />
+      <h1 className="shelf-heading">
+        <span className="heading-super">A Year in</span>
+        <span className="heading-main">BOOKS OF<br />2025</span>
+      </h1>
       <div className="shelf">
         <div className="books-row">
           {books.map((book, i) => (
