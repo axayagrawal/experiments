@@ -1,0 +1,6 @@
+{
+  "library": {
+    "name": "Bookshelf 2025",
+    "components": ["./src/**/*.webflow.tsx"]
+  }
+}
