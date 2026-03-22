@@ -34,6 +34,7 @@ body {
   justify-content: center;
   position: relative;
   z-index: 1;
+  cursor: url('/cursor-hand.png') 16 0, pointer;
 }
 
 /* Heading */
