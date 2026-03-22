@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { declareComponent, props } from "@webflow/react";
 
 /* ── DATA ── */
 const books = [
@@ -661,7 +662,7 @@ function BookSpine({ book, index, spineRef }: { book: typeof books[0]; index: nu
 }
 
 /* ── MAIN COMPONENT ── */
-export default function Bookshelf() {
+function Bookshelf() {
   const spineRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   /*
@@ -689,3 +690,11 @@ export default function Bookshelf() {
     </div>
   );
 }
+
+export default declareComponent(Bookshelf, {
+  name: "Bookshelf 2025",
+  options: {
+    ssr: false,
+  },
+  props: {},
+});
