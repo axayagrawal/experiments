@@ -619,7 +619,7 @@ function BookSpine({ book, index, spineRef }: { book: typeof books[0]; index: nu
     justifyContent: "flex-start",
     padding: "8px 4px 12px",
     borderRadius: "2px 3px 1px 1px",
-    cursor: "default",
+    cursor: "inherit",
     position: "relative",
     overflow: "hidden",
     transition: "transform 0.4s cubic-bezier(0.23,1,0.32,1), box-shadow 0.4s cubic-bezier(0.23,1,0.32,1)",

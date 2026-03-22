@@ -180,7 +180,7 @@ body {
   justify-content: flex-start;
   padding: 8px 4px 12px;
   border-radius: 2px 3px 1px 1px;
-  cursor: default;
+  cursor: inherit;
   position: relative;
   overflow: hidden;
   transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
