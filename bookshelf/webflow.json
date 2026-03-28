@@ -1,0 +1,17 @@
+{
+  "library": {
+    "name": "Playground",
+    "components": [
+      "./src/**/*.webflow.tsx"
+    ],
+    "description": "Experiments",
+    "id": "playground"
+  },
+  "telemetry": {
+    "global": {
+      "allowTelemetry": true,
+      "lastPrompted": 1774210815360,
+      "version": "1.13.0"
+    }
+  }
+}

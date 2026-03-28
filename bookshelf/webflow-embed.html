@@ -1,0 +1,747 @@
+<!--
+  Bookshelf 2025 — Webflow Embed Version
+  Drop this into an HTML Embed element in Webflow.
+  No React, no build step. Pure vanilla JS + CSS.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Caveat:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+
+<style>
+  .bs-wrap * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  .bs-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 40px 80px;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .bs-sky {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .bs-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 36px;
+    text-align: center;
+  }
+
+  .bs-heading-super {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 8px;
+  }
+
+  .bs-heading-main {
+    font-family: 'Playfair Display', serif;
+    font-size: 72px;
+    font-weight: 400;
+    line-height: 0.95;
+    color: #fff;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+
+  .bs-shelf {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .bs-books-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 20px;
+    padding-top: 40px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .bs-books-row::-webkit-scrollbar { display: none; }
+
+  .bs-ledge {
+    height: 8px;
+    background: linear-gradient(to bottom, #2a3a6a, #1a2a4a);
+    border-radius: 0 0 2px 2px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03) inset;
+  }
+
+  .bs-shadow {
+    height: 30px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.4) 0%, transparent 70%);
+  }
+
+  .bs-book-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .bs-spine-sticker {
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .bs-sticker-right { right: -12px; }
+  .bs-sticker-left { left: -12px; }
+  .bs-sticker-emoji {
+    font-size: 20px;
+    line-height: 1;
+    display: block;
+    background: white;
+    padding: 5px;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+
+  .bs-noise-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-size: 200px 200px;
+    background-repeat: repeat;
+    opacity: 0.25;
+    mix-blend-mode: overlay;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+  }
+
+  .bs-hover-sparkle-canvas {
+    position: absolute;
+    bottom: 0;
+    left: -15px;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .bs-wandering-sparkle-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 15;
+    pointer-events: none;
+  }
+
+  .bs-spine {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 4px 12px;
+    border-radius: 2px 3px 1px 1px;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.23,1,0.32,1),
+                box-shadow 0.4s cubic-bezier(0.23,1,0.32,1);
+    box-shadow: 1px 0 0 rgba(255,255,255,0.04) inset, -1px 0 0 rgba(0,0,0,0.2) inset;
+    transform-origin: bottom center;
+  }
+
+  .bs-book-wrapper:hover .bs-spine {
+    transform: translateY(-16px) rotateX(-4deg) scale(1.02);
+    z-index: 10;
+    box-shadow: 1px 0 0 rgba(255,255,255,0.1) inset, -1px 0 0 rgba(0,0,0,0.3) inset,
+                0 12px 32px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.3);
+  }
+
+  .bs-spine-stars {
+    font-size: 6px;
+    letter-spacing: 0.02em;
+    writing-mode: horizontal-tb;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 4px;
+  }
+
+  .bs-spine-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.15;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 0;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 2;
+    writing-mode: vertical-rl;
+  }
+
+  .bs-spine-author {
+    font-size: 8px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    flex-shrink: 0;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    margin-top: 4px;
+    writing-mode: vertical-rl;
+  }
+
+  @media (max-width: 768px) {
+    .bs-wrap { padding: 40px 16px 60px; }
+    .bs-books-row { padding: 0 8px; padding-top: 40px; }
+    .bs-heading-main { font-size: 48px; }
+  }
+</style>
+
+<div class="bs-wrap" id="bookshelf-app">
+  <canvas class="bs-sky" id="bs-sky-canvas"></canvas>
+  <h1 class="bs-heading">
+    <span class="bs-heading-super">A Year in</span>
+    <span class="bs-heading-main">BOOKS OF<br>2025</span>
+  </h1>
+  <div class="bs-shelf" id="bs-shelf">
+    <div class="bs-books-row" id="bs-books-row"></div>
+    <canvas class="bs-wandering-sparkle-canvas" id="bs-wandering-canvas"></canvas>
+    <div class="bs-ledge"></div>
+    <div class="bs-shadow"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  /* ── DATA ── */
+  var books = [
+    { title: "The Creative Act", author: "Rick Rubin", pages: 480, rating: 4 },
+    { title: "No More Mr. Nice Guy", author: "Robert A. Glover", pages: 192, rating: 4 },
+    { title: "Yellowface", author: "R.F. Kuang", pages: 319, rating: 4 },
+    { title: "The Silent Patient", author: "Alex Michaelides", pages: 336, rating: 3 },
+    { title: "Alice's Adventures in Wonderland", author: "Lewis Carroll", pages: 320, rating: 3 },
+    { title: "The Gentleman From Peru", author: "Andr\u00e9 Aciman", pages: 3, rating: 4 },
+    { title: "The Book Of Clarity", author: "Paras Chopra", pages: 212, rating: 4 },
+    { title: "Before the Coffee Gets Cold", author: "Toshikazu Kawaguchi", pages: 213, rating: 4 },
+    { title: "The Hard Thing About Hard Things", author: "Ben Horowitz", pages: 304, rating: 4 },
+    { title: "Ghachar Ghochar", author: "Vivek Shanbhag", pages: 118, rating: 3 },
+    { title: "Tiny Experiments", author: "Anne-Laure Le Cunff", pages: 304, rating: 4 },
+    { title: "Piranesi", author: "Susanna Clarke", pages: 245, rating: 4 },
+    { title: "White Nights", author: "Fyodor Dostoevsky", pages: 240, rating: 4 },
+    { title: "V for Vendetta", author: "Alan Moore", pages: 296, rating: 3 },
+    { title: "Of Mice and Men", author: "John Steinbeck", pages: 107, rating: 4 },
+    { title: "The Housekeeper and the Professor", author: "Y\u014dko Ogawa", pages: 180, rating: 5 },
+    { title: "The Memory Police", author: "Y\u014dko Ogawa", pages: 274, rating: 4 },
+    { title: "Hatching Twitter", author: "Nick Bilton", pages: 299, rating: 4 },
+    { title: "The Fall", author: "Albert Camus", pages: 147, rating: 4 },
+    { title: "Holes", author: "Louis Sachar", pages: 272, rating: 4 },
+    { title: "Black Edge", author: "Sheelah Kolhatkar", pages: 295, rating: 5 },
+    { title: "Company Of One", author: "Paul Jarvis", pages: 272, rating: 4 },
+    { title: "Grief Is the Thing with Feathers", author: "Max Porter", pages: 114, rating: 4 },
+    { title: "The Housemaid's Secret", author: "Freida McFadden", pages: 305, rating: 4 }
+  ];
+
+  var PALETTE = [
+    { bg: "#1a1a2e", text: "#e0e0e0", accent: "#e94560" },
+    { bg: "#f4a261", text: "#1a1a1a", accent: "#264653" },
+    { bg: "#e9c46a", text: "#1a1a1a", accent: "#2a9d8f" },
+    { bg: "#264653", text: "#e9c46a", accent: "#e76f51" },
+    { bg: "#2a9d8f", text: "#ffffff", accent: "#264653" },
+    { bg: "#e76f51", text: "#ffffff", accent: "#264653" },
+    { bg: "#606c38", text: "#fefae0", accent: "#dda15e" },
+    { bg: "#283618", text: "#fefae0", accent: "#bc6c25" },
+    { bg: "#dda15e", text: "#283618", accent: "#606c38" },
+    { bg: "#fefae0", text: "#283618", accent: "#bc6c25" },
+    { bg: "#003049", text: "#fcbf49", accent: "#eae2b7" },
+    { bg: "#d62828", text: "#eae2b7", accent: "#003049" },
+    { bg: "#f77f00", text: "#003049", accent: "#eae2b7" },
+    { bg: "#fcbf49", text: "#003049", accent: "#d62828" },
+    { bg: "#8338ec", text: "#ffffff", accent: "#ffbe0b" },
+    { bg: "#3a86ff", text: "#ffffff", accent: "#ff006e" },
+    { bg: "#ff006e", text: "#ffffff", accent: "#3a86ff" },
+    { bg: "#ffbe0b", text: "#1a1a1a", accent: "#8338ec" },
+    { bg: "#023047", text: "#8ecae6", accent: "#ffb703" },
+    { bg: "#219ebc", text: "#023047", accent: "#ffb703" },
+    { bg: "#fb8500", text: "#023047", accent: "#8ecae6" },
+    { bg: "#6d6875", text: "#e5989b", accent: "#b5838d" },
+    { bg: "#e5989b", text: "#1a1a1a", accent: "#6d6875" },
+    { bg: "#1a1a2e", text: "#e0e0e0", accent: "#e94560" }
+  ];
+
+  var STICKERS = [
+    { emoji: "\ud83d\udd25" }, { emoji: "\ud83d\udc80" }, { emoji: "\ud83d\ude2d" },
+    { emoji: "\ud83e\udd2f" }, { emoji: "\u2764\ufe0f" }, { emoji: "\ud83c\udf19" },
+    { emoji: "\u2728" }, { emoji: "\ud83e\udee0" }, { emoji: "\ud83d\udcaf" },
+    { emoji: "\ud83e\udde0" }, { emoji: "\u2615" }, { emoji: "\ud83c\udfad" },
+    { emoji: "\ud83d\udc7b" }, { emoji: "\ud83e\ude90" }, { emoji: "\ud83d\udcd6" },
+    { emoji: "\ud83c\udfaa" }
+  ];
+
+  /* ── UTILS ── */
+  function seededRandom(seed) {
+    var x = Math.sin(seed + 1) * 10000;
+    return x - Math.floor(x);
+  }
+
+  function getSparkleRgb(bgHex) {
+    var r = parseInt(bgHex.slice(1, 3), 16);
+    var g = parseInt(bgHex.slice(3, 5), 16);
+    var b = parseInt(bgHex.slice(5, 7), 16);
+    var brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    if (brightness < 100) return [255, 255, 255];
+    if (brightness < 160) return [255, 245, 220];
+    return [60, 40, 20];
+  }
+
+  /* ── PIANO (Web Audio) ── */
+  var audioCtx = null;
+  var NOTES = [261.63, 293.66, 329.63, 392.00, 440.00, 493.88, 523.25,
+               587.33, 659.25, 783.99, 880.00, 987.77, 1046.50];
+
+  function playNote(index, total) {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var noteIndex = Math.floor((index / total) * NOTES.length);
+    var freq = NOTES[Math.min(noteIndex, NOTES.length - 1)];
+    var now = audioCtx.currentTime;
+
+    var osc = audioCtx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, now);
+
+    var osc2 = audioCtx.createOscillator();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(freq * 2, now);
+
+    var gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.04, now + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+    var gain2 = audioCtx.createGain();
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.linearRampToValueAtTime(0.02, now + 0.02);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+    var delay = audioCtx.createDelay();
+    delay.delayTime.setValueAtTime(0.12, now);
+    var delayGain = audioCtx.createGain();
+    delayGain.gain.setValueAtTime(0.03, now);
+
+    osc.connect(gain); osc2.connect(gain2);
+    gain.connect(audioCtx.destination); gain2.connect(audioCtx.destination);
+    gain.connect(delay); delay.connect(delayGain); delayGain.connect(audioCtx.destination);
+
+    osc.start(now); osc2.start(now);
+    osc.stop(now + 1.5); osc2.stop(now + 1.0);
+  }
+
+  /* ── NOISE FRAMES ── */
+  var noiseFrames = null;
+  function getNoiseFrames() {
+    if (noiseFrames) return noiseFrames;
+    var size = 150, frameCount = 12;
+    noiseFrames = [];
+    for (var f = 0; f < frameCount; f++) {
+      var c = document.createElement("canvas");
+      c.width = size; c.height = size;
+      var ctx = c.getContext("2d");
+      var img = ctx.createImageData(size, size);
+      var d = img.data;
+      for (var i = 0; i < d.length; i += 4) {
+        var rand = Math.random();
+        if (rand > 0.94) {
+          d[i] = 255; d[i+1] = 255; d[i+2] = 255;
+          d[i+3] = 180 + Math.random() * 75;
+        } else {
+          var v = Math.random() * 255;
+          d[i] = v; d[i+1] = v; d[i+2] = v;
+          d[i+3] = 40 + Math.random() * 80;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      noiseFrames.push(c.toDataURL("image/png"));
+    }
+    return noiseFrames;
+  }
+
+  /* ── ANIMATED NOISE (shared across all spines) ── */
+  var noiseEls = [];
+  function startNoiseAnimation() {
+    var frames = getNoiseFrames();
+    var frameIdx = 0, lastTime = 0;
+    function tick(t) {
+      if (t - lastTime > 70) {
+        frameIdx = (frameIdx + 1) % frames.length;
+        var url = "url(" + frames[frameIdx] + ")";
+        for (var i = 0; i < noiseEls.length; i++) {
+          noiseEls[i].style.backgroundImage = url;
+        }
+        lastTime = t;
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* ── BUILD BOOKS ── */
+  var spineEls = [];
+  var row = document.getElementById("bs-books-row");
+
+  books.forEach(function(book, index) {
+    var color = PALETTE[index % PALETTE.length];
+    var seed = book.title.length * 7 + index * 13;
+
+    var pageRatio = Math.min(book.pages / 500, 1);
+    var height = 300 + pageRatio * 140;
+    var pageNorm = Math.min(Math.max((book.pages - 3) / (480 - 3), 0), 1);
+    var width = 20 + pageNorm * 45;
+
+    // Wrapper
+    var wrapper = document.createElement("div");
+    wrapper.className = "bs-book-wrapper";
+
+    // Hover sparkle canvas
+    var pad = 15;
+    var sparkleCanvas = document.createElement("canvas");
+    sparkleCanvas.className = "bs-hover-sparkle-canvas";
+    sparkleCanvas.style.width = (width + pad * 2) + "px";
+    sparkleCanvas.style.height = (height + pad * 2) + "px";
+    var dpr = window.devicePixelRatio || 1;
+    sparkleCanvas.width = (width + pad * 2) * dpr;
+    sparkleCanvas.height = (height + pad * 2) * dpr;
+    wrapper.appendChild(sparkleCanvas);
+
+    // Spine
+    var spine = document.createElement("div");
+    spine.className = "bs-spine";
+    spine.style.backgroundColor = color.bg;
+    spine.style.color = color.text;
+    spine.style.height = height + "px";
+    spine.style.width = width + "px";
+    spine.title = book.title + " by " + book.author + " \u2014 " +
+      "\u2605".repeat(book.rating) + "\u2606".repeat(5 - book.rating);
+
+    // Noise overlay
+    var noise = document.createElement("div");
+    noise.className = "bs-noise-overlay";
+    noiseEls.push(noise);
+    spine.appendChild(noise);
+
+    // Sticker
+    var hasSticker = seededRandom(seed + 20) < 0.35;
+    if (hasSticker) {
+      var sticker = STICKERS[Math.floor(seededRandom(seed + 21) * STICKERS.length)];
+      var side = seededRandom(seed + 22) > 0.5 ? "right" : "left";
+      var stickerTop = 10 + seededRandom(seed + 23) * 60;
+      var stickerRot = -15 + seededRandom(seed + 24) * 30;
+
+      var stickerEl = document.createElement("div");
+      stickerEl.className = "bs-spine-sticker bs-sticker-" + side;
+      stickerEl.style.top = stickerTop + "%";
+      stickerEl.style.transform = "rotate(" + stickerRot + "deg)";
+      var emojiSpan = document.createElement("span");
+      emojiSpan.className = "bs-sticker-emoji";
+      emojiSpan.textContent = sticker.emoji;
+      stickerEl.appendChild(emojiSpan);
+      spine.appendChild(stickerEl);
+    }
+
+    // Stars
+    var stars = document.createElement("div");
+    stars.className = "bs-spine-stars";
+    stars.style.color = color.accent;
+    stars.textContent = "\u2605".repeat(book.rating);
+    spine.appendChild(stars);
+
+    // Title
+    var title = document.createElement("div");
+    title.className = "bs-spine-title";
+    title.textContent = book.title;
+    spine.appendChild(title);
+
+    // Author
+    var author = document.createElement("div");
+    author.className = "bs-spine-author";
+    author.textContent = book.author.split(" ").pop();
+    spine.appendChild(author);
+
+    wrapper.appendChild(spine);
+    row.appendChild(wrapper);
+    spineEls.push(spine);
+
+    // Hover events
+    (function(idx, sc, w, h) {
+      var sparkleCtx = sc.getContext("2d");
+      sparkleCtx.scale(dpr, dpr);
+      var canvasW = w + pad * 2;
+      var canvasH = h + pad * 2;
+      var sparkles = null;
+      var animId = null;
+
+      wrapper.addEventListener("mouseenter", function() {
+        playNote(idx, books.length);
+
+        // Create 2-3 sparkle stars
+        var count = 2 + Math.floor(Math.random() * 2);
+        sparkles = [];
+        for (var i = 0; i < count; i++) {
+          var edgeChance = Math.random();
+          var x, y;
+          if (edgeChance < 0.4) {
+            x = Math.random() > 0.5 ? pad + Math.random() * 6 : pad + w - Math.random() * 6;
+            y = pad + 20 + Math.random() * (h - 40);
+          } else if (edgeChance < 0.7) {
+            x = pad + Math.random() * w;
+            y = Math.random() > 0.5 ? pad + Math.random() * 10 : pad + h - Math.random() * 10;
+          } else {
+            x = pad + Math.random() * w;
+            y = pad + 20 + Math.random() * (h - 40);
+          }
+          sparkles.push({ x: x, y: y, maxSize: 4 + Math.random() * 6, delay: i * 0.15, speed: 1.5 + Math.random() * 1.5 });
+        }
+
+        var startTime = performance.now();
+        function draw(t) {
+          sparkleCtx.clearRect(0, 0, canvasW, canvasH);
+          if (!sparkles) return;
+          var elapsed = (t - startTime) / 1000;
+          var allDone = true;
+
+          for (var i = 0; i < sparkles.length; i++) {
+            var s = sparkles[i];
+            var adj = Math.max(0, elapsed - s.delay);
+            if (adj <= 0) { allDone = false; continue; }
+            var dur = 0.8 / s.speed;
+            if (adj > dur) continue;
+            allDone = false;
+            var t01 = adj / dur;
+            var scale;
+            if (t01 < 0.25) scale = t01 / 0.25;
+            else if (t01 < 0.5) scale = 0.9 + Math.sin(t01 * 20) * 0.1;
+            else scale = 1 - (t01 - 0.5) / 0.5;
+
+            var sz = s.maxSize * scale;
+            var alpha = scale * 0.95;
+            if (sz < 0.3) continue;
+
+            sparkleCtx.fillStyle = "rgba(255,255,255," + alpha + ")";
+            sparkleCtx.shadowColor = "rgba(255,255,255," + (alpha * 0.8) + ")";
+            sparkleCtx.shadowBlur = sz * 4;
+
+            sparkleCtx.beginPath();
+            sparkleCtx.moveTo(s.x - sz * 2, s.y);
+            sparkleCtx.lineTo(s.x - sz * 0.25, s.y - sz * 0.25);
+            sparkleCtx.lineTo(s.x, s.y - sz * 2);
+            sparkleCtx.lineTo(s.x + sz * 0.25, s.y - sz * 0.25);
+            sparkleCtx.lineTo(s.x + sz * 2, s.y);
+            sparkleCtx.lineTo(s.x + sz * 0.25, s.y + sz * 0.25);
+            sparkleCtx.lineTo(s.x, s.y + sz * 2);
+            sparkleCtx.lineTo(s.x - sz * 0.25, s.y + sz * 0.25);
+            sparkleCtx.closePath();
+            sparkleCtx.fill();
+            sparkleCtx.shadowBlur = 0;
+          }
+
+          if (!allDone) animId = requestAnimationFrame(draw);
+        }
+        animId = requestAnimationFrame(draw);
+      });
+
+      wrapper.addEventListener("mouseleave", function() {
+        sparkles = null;
+        if (animId) cancelAnimationFrame(animId);
+        sparkleCtx.clearRect(0, 0, canvasW, canvasH);
+      });
+    })(index, sparkleCanvas, width, height);
+  });
+
+  /* ── WANDERING SPARKLE ── */
+  (function() {
+    var canvas = document.getElementById("bs-wandering-canvas");
+    var ctx = canvas.getContext("2d");
+    var currentBookIdx = Math.floor(Math.random() * books.length);
+    var sparkleX = 0, sparkleY = 0, phase = 2, progress = 0, maxSize = 0;
+    var sparkleColor = [255, 255, 255];
+    var waitCounter = 0, waitFrames = 20 + Math.random() * 40;
+
+    function resize() {
+      var dpr = window.devicePixelRatio || 1;
+      var parent = canvas.parentElement;
+      if (!parent) return;
+      canvas.width = parent.offsetWidth * dpr;
+      canvas.height = parent.offsetHeight * dpr;
+      canvas.style.width = parent.offsetWidth + "px";
+      canvas.style.height = parent.offsetHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function pickNew() {
+      currentBookIdx = Math.floor(Math.random() * books.length);
+      var spine = spineEls[currentBookIdx];
+      if (!spine) return;
+      var rect = spine.getBoundingClientRect();
+      var cRect = canvas.getBoundingClientRect();
+      sparkleX = rect.left - cRect.left + Math.random() * rect.width;
+      sparkleY = rect.top - cRect.top + Math.random() * rect.height;
+      maxSize = 3 + Math.random() * 8;
+      var bg = PALETTE[currentBookIdx % PALETTE.length].bg;
+      sparkleColor = getSparkleRgb(bg);
+      phase = 0; progress = 0;
+    }
+
+    resize();
+    pickNew();
+    window.addEventListener("resize", resize);
+
+    function draw() {
+      var parent = canvas.parentElement;
+      if (!parent) { requestAnimationFrame(draw); return; }
+      ctx.clearRect(0, 0, parent.offsetWidth, parent.offsetHeight);
+
+      if (phase === 0) {
+        progress += 0.025;
+        if (progress >= 1) { phase = 1; progress = 1; }
+      } else if (phase === 1) {
+        progress -= 0.03;
+        if (progress <= 0) { phase = 2; waitCounter = 0; }
+      } else {
+        waitCounter++;
+        if (waitCounter > waitFrames) pickNew();
+        requestAnimationFrame(draw);
+        return;
+      }
+
+      var sz = maxSize * progress;
+      var alpha = progress;
+      var r = sparkleColor[0], g = sparkleColor[1], b = sparkleColor[2];
+
+      if (sz > 0.5) {
+        ctx.fillStyle = "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+        ctx.beginPath();
+        ctx.moveTo(sparkleX - sz * 2, sparkleY);
+        ctx.lineTo(sparkleX - sz * 0.3, sparkleY - sz * 0.3);
+        ctx.lineTo(sparkleX, sparkleY - sz * 2);
+        ctx.lineTo(sparkleX + sz * 0.3, sparkleY - sz * 0.3);
+        ctx.lineTo(sparkleX + sz * 2, sparkleY);
+        ctx.lineTo(sparkleX + sz * 0.3, sparkleY + sz * 0.3);
+        ctx.lineTo(sparkleX, sparkleY + sz * 2);
+        ctx.lineTo(sparkleX - sz * 0.3, sparkleY + sz * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowColor = "rgba(" + r + "," + g + "," + b + "," + (alpha * 0.6) + ")";
+        ctx.shadowBlur = sz * 2;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  })();
+
+  /* ── PIXEL SKY ── */
+  (function() {
+    var canvas = document.getElementById("bs-sky-canvas");
+    var ctx = canvas.getContext("2d");
+    var pixelSize = 8;
+
+    var CLOUD_SHAPES = [
+      { grid: ["    1111    ","  11111111  "," 1111111111 ","111111111111","111111111111"," 1111111111 "],
+        shadow: ["            ","            ","            ","            ","  22222222  "," 2222222222 "] },
+      { grid: ["   111111   "," 111111111  ","1111111111111","1111111111111"," 11111111111 "],
+        shadow: ["             ","             ","             "," 2222222222  "," 22222222222 "] },
+      { grid: ["  1111  "," 111111 ","11111111","11111111"," 111111 "],
+        shadow: ["        ","        ","        "," 222222 "," 222222 "] },
+      { grid: ["   11   ","  1111  "," 111111 ","11111111","11111111","11111111"," 111111 "],
+        shadow: ["        ","        ","        ","        ","  2222  ","22222222"," 222222 "] },
+      { grid: [" 111  ","111111","111111"," 1111 "],
+        shadow: ["      ","      "," 2222 "," 2222 "] }
+    ];
+
+    var clouds = [];
+    for (var i = 0; i < 6; i++) {
+      var shape = CLOUD_SHAPES[i % CLOUD_SHAPES.length];
+      var sizeRoll = Math.random();
+      var scale = sizeRoll < 0.3 ? 1.8 + Math.random() * 1.2 : 0.8 + Math.random() * 0.6;
+      clouds.push({ x: Math.random() * 1.5, y: 0.05 + Math.random() * 0.65,
+                     speed: 0.012 + Math.random() * 0.02, scale: scale, shape: shape });
+    }
+
+    function resize() {
+      var dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    function drawCloud(cloud, w) {
+      var shape = cloud.shape, sc = cloud.scale;
+      var px = Math.round(pixelSize * sc);
+      var cx = cloud.x * w, cy = cloud.y * window.innerHeight;
+
+      ctx.fillStyle = "#7CB8F7";
+      for (var r = 0; r < shape.shadow.length; r++)
+        for (var c = 0; c < shape.shadow[r].length; c++)
+          if (shape.shadow[r][c] === "2")
+            ctx.fillRect(Math.round(cx + c * px), Math.round(cy + r * px + px * 0.5), px, px);
+
+      ctx.fillStyle = "#FFFFFF";
+      for (var r = 0; r < shape.grid.length; r++)
+        for (var c = 0; c < shape.grid[r].length; c++)
+          if (shape.grid[r][c] === "1")
+            ctx.fillRect(Math.round(cx + c * px), Math.round(cy + r * px), px, px);
+
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      var topRow = shape.grid[0];
+      if (topRow)
+        for (var c = 0; c < topRow.length; c++)
+          if (topRow[c] === "1")
+            ctx.fillRect(Math.round(cx + c * px), Math.round(cy), px, Math.round(px * 0.4));
+    }
+
+    function draw() {
+      var w = window.innerWidth, h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
+      for (var i = 0; i < clouds.length; i++) {
+        var cloud = clouds[i];
+        cloud.x -= cloud.speed / 100;
+        var cloudWidth = (cloud.shape.grid[0] ? cloud.shape.grid[0].length : 10) * pixelSize * cloud.scale;
+        if (cloud.x * w + cloudWidth < -100) {
+          cloud.x = 1.1 + Math.random() * 0.3;
+          cloud.y = 0.05 + Math.random() * 0.65;
+        }
+        drawCloud(cloud, w);
+      }
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  })();
+
+  /* ── START NOISE ANIMATION ── */
+  startNoiseAnimation();
+
+})();
+</script>

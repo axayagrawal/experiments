@@ -582,12 +582,18 @@ function PixelSky() {
       });
     }
 
+    function getSize() {
+      const parent = canvas.parentElement;
+      return parent ? { w: parent.offsetWidth, h: parent.offsetHeight } : { w: window.innerWidth, h: window.innerHeight };
+    }
+
     function resize() {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
+      const { w, h } = getSize();
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
@@ -598,7 +604,7 @@ function PixelSky() {
       const { shape, scale } = cloud;
       const px = Math.round(pixelSize * scale);
       const cx = cloud.x * w;
-      const cy = cloud.y * window.innerHeight;
+      const cy = cloud.y * getSize().h;
 
       // Draw shadow layer first (light blue)
       ctx.fillStyle = "#7CB8F7";
@@ -648,8 +654,7 @@ function PixelSky() {
     }
 
     function draw() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const { w, h } = getSize();
       ctx.clearRect(0, 0, w, h);
 
       for (const cloud of clouds) {

@@ -16,7 +16,7 @@ body {
 
 /* Night sky background */
 .night-sky {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -33,7 +33,13 @@ body {
   padding: 40px 40px 80px;
   justify-content: center;
   position: relative;
-  z-index: 1;
+  overflow: hidden;
+  cursor: url('/cursor-hand.png') 16 0, pointer;
+}
+
+.page > *:not(.night-sky) {
+  position: relative;
+  z-index: 2;
 }
 
 /* Heading */
@@ -179,7 +185,7 @@ body {
   justify-content: flex-start;
   padding: 8px 4px 12px;
   border-radius: 2px 3px 1px 1px;
-  cursor: default;
+  cursor: inherit;
   position: relative;
   overflow: hidden;
   transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
